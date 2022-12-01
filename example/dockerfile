@@ -1,0 +1,14 @@
+FROM jupyter/minimal-notebook:latest
+
+USER ${NB_UID}
+
+RUN pip install --quiet --no-cache-dir jupyter_contrib_nbextensions && \
+    jupyter contrib nbextension install --user && \
+    # can modify or enable additional extensions here
+    jupyter nbextension enable spellchecker/main --user && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
+
+COPY requirements.txt /tmp/requirements.txt
+# Install Python 3 packages
+RUN pip install -r /tmp/requirements.txt

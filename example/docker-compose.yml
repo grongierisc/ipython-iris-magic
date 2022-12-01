@@ -1,0 +1,19 @@
+services:
+  notebook:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8889:8888"
+    volumes:
+      - ./Notebooks:/Notebooks
+    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --notebook-dir=/Notebooks"
+  iris:
+    image: intersystemsdc/iris-community:preview
+    command: 
+      - --check-caps false
+      - -a
+      - iris session iris -U%SYS '##class(Security.Users).UnExpireUserPasswords("*")'
+    ports:
+      - 52773
+      - 1972
