@@ -43,7 +43,7 @@ def main():
             "ipython>=1.0",
             "ipython-genutils>=0.1.0",
             "sqlalchemy-iris>=0.4.0",
-            "intersystems-iris>=3.2.0",
+            "intersystems-iris",
         ]
     )
 
