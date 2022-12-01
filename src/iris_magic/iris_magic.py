@@ -5,12 +5,13 @@ import intersystems_iris
 from IPython.core.magic import (Magics, magics_class, cell_magic, line_magic)
 from IPython.display import display,HTML
 
-routine_string = """
+_ROUTINE = """
 ROUTINE ExecCode
 
 Run(cmd)  
         Set tInitIO = $IO
-        // we MUST use variable called %Stream that is used by a mnemonic space created by our routine
+        // we MUST use variable called %Stream that is used by a 
+        // mnemonic space created by our routine
         set %Stream=##class(%Stream.TmpCharacter).%New()
         use tInitIO::("^"_$zname)
         do ##class(%Library.Device).ReDirectIO(1)
@@ -36,6 +37,7 @@ rchr(time) Quit ""
 
 @magics_class
 class IrisMagic(Magics):
+    """IRIS Magic"""
 
     conn = None
     iris = None
@@ -50,7 +52,7 @@ class IrisMagic(Magics):
     def iris(self, line, cell):
         """
         An iris magic
-        It can interpret iris code (ObjectScript) and SQL code
+        It can interpret iris code (ObjectScript)
         Returns the result of the code execution
         """
         # check is the line is not empty and if it is a connection string
@@ -81,6 +83,7 @@ class IrisMagic(Magics):
         display(HTML(rsp))
 
     def create_connection(self, connection_string):
+        """Create a connection to IRIS"""
         try:
             if not connection_string.startswith('iris://'):
                 display(HTML("""No connection to IRIS\n
@@ -93,8 +96,8 @@ class IrisMagic(Magics):
             self.conn = engine.raw_connection()
             self.iris = intersystems_iris.createIRIS(self.conn)
             self.create_routine()
-        except Exception as e:
-            display(HTML(e))
+        except Exception as experr: # pylint: disable=broad-except
+            display(HTML(experr))
 
     def create_routine(self):
         """Create the routine to execute the code"""
@@ -105,15 +108,9 @@ class IrisMagic(Magics):
         routine = self.iris.classMethodObject("%Routine","%New","ExecCode")
         # for each line in ExecCode.mac
         # add it to the routine
-        for line in routine_string.splitlines():
+        for line in _ROUTINE.splitlines():
             routine.invokeVoid("WriteLine",line)
         # save the routine
         routine.invokeVoid("Save")
         # compile the routine
         routine.invokeVoid("Compile")
-
-if __name__ == '__main__':
-    iris_magic = IrisMagic()
-    iris_magic.iris('iris://superuser:SYS@localhost:51776/USER','zw "Hello World"')
-    iris_magic.iris('','set x = 1')
-
