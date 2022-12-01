@@ -38,7 +38,7 @@ def main():
         ],
         package_dir={'': 'src'},
         packages=['iris_magic'],
-        python_requires='>=3.7',
+        python_requires='>=3.9',
         install_requires=[
             "ipython>=1.0",
             "ipython-genutils>=0.1.0",
