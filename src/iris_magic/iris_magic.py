@@ -1,4 +1,3 @@
-from contextlib import redirect_stdout
 from sqlalchemy import create_engine
 import intersystems_iris
 
@@ -43,13 +42,13 @@ class IrisMagic(Magics):
     iris = None
 
     @line_magic
-    def iris(self, line):
-        """Run the cell block of Iris code""" 
+    def iris(self, line): # pylint: disable=function-redefined,method-hidden
+        """Run the cell block of Iris code"""
         if self.conn is None:
             self.create_connection(line)
 
     @cell_magic
-    def iris(self, line, cell):
+    def iris(self, line, cell): # pylint: disable=function-redefined,method-hidden
         """
         An iris magic
         It can interpret iris code (ObjectScript)

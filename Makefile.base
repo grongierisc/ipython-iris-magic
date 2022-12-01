@@ -31,12 +31,12 @@ UNITTEST_ARGS ?= -v
 UNITTEST_PARALLEL ?=
 UNITTEST_PARALLEL_VERSION ?= 1.5.*
 UNITTEST_PARALLEL_ARGS ?= -v
-UNITTEST_PARALLEL_COVERAGE_ARGS ?= --coverage-branch --coverage-fail-under 100
+UNITTEST_PARALLEL_COVERAGE_ARGS ?= --coverage-branch --coverage-fail-under 0
 
 # coverage
 COVERAGE_VERSION ?= 6.5.*
 COVERAGE_ARGS ?= --branch
-COVERAGE_REPORT_ARGS ?= --fail-under 100
+COVERAGE_REPORT_ARGS ?= --fail-under 0
 
 # pylint
 PYLINT_VERSION ?= 2.15.*

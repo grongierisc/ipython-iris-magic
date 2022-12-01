@@ -10,5 +10,3 @@ class TestIrisMagic(unittest.TestCase):
     def test_iris_magic(self):
         magic = IrisMagic()
         self.assertTrue(magic)
-
-
