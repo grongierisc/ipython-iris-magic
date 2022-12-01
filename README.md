@@ -1,6 +1,8 @@
 # ipython-iris-magic
 
-%%iris magic for IPython, can run ObjectScript command in Notebooks
+%%iris magic for IPython, can run ObjectScript command in Notebooks.
+
+It can be run in any Notebook and does not require any special setup on IRIS or the Notebook.
 
 ## Demo
 
