@@ -6,14 +6,15 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./example/Notebooks:/Notebooks
+      - ./example/Notebooks/Vanilla:/Notebooks
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --notebook-dir=/Notebooks"
   iris:
-    image: intersystemsdc/iris-community:preview
-    command: 
-      - --check-caps false
-      - -a
-      - iris session iris -U%SYS '##class(Security.Users).UnExpireUserPasswords("*")'
+    build: 
+      context: iris
+      dockerfile: Dockerfile
+    volumes:
+      - ./example/Notebooks/Embedded:/irisdev/app/src/Notebooks
     ports:
       - 52773
       - 1972
+      - 8889:8888

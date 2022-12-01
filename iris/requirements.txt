@@ -1,0 +1,6 @@
+jupyter
+pandas
+sqlalchemy-iris
+intersystems-iris
+ipython-sql
+ipython-iris-magic

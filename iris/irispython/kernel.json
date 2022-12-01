@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "/usr/irissys/bin/irispython",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "IRIS Python",
+  "language": "python",
+  "metadata": {
+    "debugger": true
+  }
+}
