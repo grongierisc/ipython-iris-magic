@@ -1,12 +1,12 @@
 services:
   notebook:
     build: 
-      context: .
+      context: example
       dockerfile: Dockerfile
     ports:
-      - "8889:8888"
+      - "8888:8888"
     volumes:
-      - ./Notebooks:/Notebooks
+      - ./example/Notebooks:/Notebooks
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --notebook-dir=/Notebooks"
   iris:
     image: intersystemsdc/iris-community:preview
