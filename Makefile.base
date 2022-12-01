@@ -1,0 +1,228 @@
+# -*- makefile-gmake -*-
+# Licensed under the MIT License
+# https://github.com/craigahobbs/python-build/blob/main/LICENSE
+
+# python-build - https://github.com/craigahobbs/python-build#readme
+
+.DEFAULT_GOAL := help
+
+
+# Python docker images with which to run unit tests
+ifeq '$(NO_DOCKER)' ''
+PYTHON_IMAGES ?= \
+    python:3.11 \
+    python:3.10 \
+    python:3.9 \
+    python:3.8 \
+    python:3.7
+
+# Exclude Python docker images
+PYTHON_IMAGES := $(foreach IMAGE,$(PYTHON_IMAGES),$(if $(findstring $(IMAGE),$(PYTHON_IMAGES_EXCLUDE)),,$(IMAGE)))
+else
+PYTHON_IMAGES := no-docker
+endif
+
+# Python pip option
+PIP_ARGS ?= -q --no-cache-dir
+PIP_INSTALL_ARGS ?= --progress-bar off --retries 2 --timeout 5
+
+# Python unittest
+UNITTEST_ARGS ?= -v
+
+# unittest-parallel
+UNITTEST_PARALLEL ?=
+UNITTEST_PARALLEL_VERSION ?= 1.5.*
+UNITTEST_PARALLEL_ARGS ?= -v
+UNITTEST_PARALLEL_COVERAGE_ARGS ?= --coverage-branch --coverage-fail-under 100
+
+# coverage
+COVERAGE_VERSION ?= 6.5.*
+COVERAGE_ARGS ?= --branch
+COVERAGE_REPORT_ARGS ?= --fail-under 100
+
+# pylint
+PYLINT_VERSION ?= 2.15.*
+PYLINT_ARGS ?= -j 0
+
+# sphinx
+SPHINX_DOC ?=
+SPHINX_VERSION ?= 5.3.*
+SPHINX_ARGS ?= -W -a
+
+# gh-pages source paths
+GHPAGES_SRC ?= $(if $(SPHINX_DOC),build/doc/html/)
+
+# Helper functions
+IMAGE_NAME_FN = $(subst .,-,$(subst :,-,$(strip $(1))))
+IMAGE_SYMBOL_FN = $(call UPPER_FN,$(subst -,_,$(call IMAGE_NAME_FN,$(1))))
+UPPER_FN = $(strip $(subst a,A,$(subst b,B,$(subst c,C,$(subst d,D,$(subst e,E,$(subst f,F,$(subst g,G,$(subst h,H,$(subst i,I,\
+    $(subst j,J,$(subst k,K,$(subst l,L,$(subst m,M,$(subst n,N,$(subst o,O,$(subst p,P,$(subst q,Q,$(subst r,R,$(subst s,S,\
+    $(subst t,T,$(subst u,U,$(subst v,V,$(subst w,W,$(subst x,X,$(subst y,Y,$(subst z,Z,$(1))))))))))))))))))))))))))))
+
+
+.PHONY: _help help
+help: _help
+_help:
+	@echo 'usage: make [changelog|clean|commit|cover|doc|gh-pages|lint|publish|superclean|test]'
+
+
+.PHONY: _clean clean
+clean: _clean
+_clean:
+	rm -rf build/ dist/ .coverage src/*.egg-info $$(find src -name __pycache__)
+
+
+.PHONY: _superclean superclean
+superclean: clean _superclean
+_superclean:
+ifeq '$(NO_DOCKER)' ''
+	-docker rmi -f $(PYTHON_IMAGES)
+endif
+
+
+.PHONY: commit
+commit: test lint doc cover
+
+
+# Function to generate venv rules - venv_name, docker_image, pip_args, commands
+define VENV_RULE_FN
+$(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_DIR := build/venv/$(strip $(1))-$(call IMAGE_NAME_FN,$(2))
+$(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_RUN := \
+    $$(if $$(NO_DOCKER),,docker run -i --rm -u `id -g`:`id -g` -v `pwd`:`pwd` -w `pwd` $(strip $(2)))
+$(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_CMD := \
+    $$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_RUN) $$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_DIR)/bin
+$(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_BUILD := build/venv/$(strip $(1))-$(call IMAGE_NAME_FN,$(2)).build
+
+ifeq '$(firstword $(PYTHON_IMAGES))' '$(strip $(2))'
+$(call UPPER_FN,$(1))_DEFAULT_VENV_DIR := $$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_DIR)
+$(call UPPER_FN,$(1))_DEFAULT_VENV_RUN := $$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_RUN)
+$(call UPPER_FN,$(1))_DEFAULT_VENV_CMD := $$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_CMD)
+$(call UPPER_FN,$(1))_DEFAULT_VENV_BUILD := $$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_BUILD)
+endif
+
+$$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_BUILD):
+ifeq '$$(NO_DOCKER)' ''
+	if [ "$$$$(docker images -q $(strip $(2)))" = "" ]; then docker pull -q $(strip $(2)); fi
+endif
+	$$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_RUN) python3 -m venv $$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_DIR)
+	$$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_CMD)/pip $$(PIP_ARGS) install $$(PIP_INSTALL_ARGS) -U pip setuptools
+	$$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_CMD)/pip $$(PIP_ARGS) install $$(PIP_INSTALL_ARGS) $$(strip $(3))
+	touch $$@
+
+.PHONY: $(strip $(1))-$(call IMAGE_NAME_FN,$(2))
+$(strip $(1))-$(call IMAGE_NAME_FN,$(2)): $$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_BUILD)
+$(call $(4),$$($(call UPPER_FN,$(1))_$(call IMAGE_SYMBOL_FN,$(2))_VENV_CMD))
+
+.PHONY: $(strip $(1))
+$(strip $(1)): $(strip $(1))-$(call IMAGE_NAME_FN,$(2))
+endef
+
+
+define TEST_COMMANDS_FN
+ifneq '$$(TEST)' ''
+	$(1)/python3 -m unittest $$(UNITTEST_ARGS) $$(TEST)
+else ifneq '$$(UNITTEST_PARALLEL)' ''
+	$(1)/unittest-parallel -t src/ -s src/tests/ $$(UNITTEST_PARALLEL_ARGS)
+else
+	$(1)/python3 -m unittest discover -t src/ -s src/tests/ $$(UNITTEST_ARGS)
+endif
+endef
+TEST_RULES_FN = $(call VENV_RULE_FN, test, $(1), \
+    -e .$(if $(UNITTEST_PARALLEL), unittest-parallel=="$(UNITTEST_PARALLEL_VERSION)") $$(TESTS_REQUIRE), \
+    TEST_COMMANDS_FN)
+$(foreach IMAGE, $(PYTHON_IMAGES), $(eval $(call TEST_RULES_FN, $(IMAGE))))
+ifneq '$(DUMP_RULES)' ''
+$(foreach IMAGE, $(PYTHON_IMAGES), $(info $(call TEST_RULES_FN, $(IMAGE))) $(info ))
+endif
+
+
+define COVER_COMMANDS_FN
+ifneq '$$(TEST)' ''
+	$(1)/python3 -m coverage run --source src/ $$(COVERAGE_ARGS) -m unittest $$(UNITTEST_ARGS) $$(TEST)
+	$(1)/python3 -m coverage html -d build/coverage
+	$(1)/python3 -m coverage report $$(COVERAGE_REPORT_ARGS)
+else ifneq '$$(UNITTEST_PARALLEL)' ''
+	$(1)/unittest-parallel -t src/ -s src/tests/ $$(UNITTEST_PARALLEL_ARGS) --coverage-html=build/coverage $$(UNITTEST_PARALLEL_COVERAGE_ARGS)
+else
+	$(1)/python3 -m coverage run --source src/ $$(COVERAGE_ARGS) -m unittest discover -t src/ -s src/tests/ $$(UNITTEST_ARGS)
+	$(1)/python3 -m coverage html -d build/coverage
+	$(1)/python3 -m coverage report $$(COVERAGE_REPORT_ARGS)
+endif
+endef
+COVER_RULES := $(call VENV_RULE_FN, cover, $(firstword $(PYTHON_IMAGES)), \
+    -e . coverage=="$$(COVERAGE_VERSION)"$(if $(UNITTEST_PARALLEL), unittest-parallel=="$(UNITTEST_PARALLEL_VERSION)") $$(TESTS_REQUIRE), \
+    COVER_COMMANDS_FN)
+$(eval $(COVER_RULES))
+ifneq '$(DUMP_RULES)' ''
+$(info $(COVER_RULES))
+$(info )
+endif
+
+
+define LINT_COMMANDS_FN
+	$(1)/python3 -m pylint $$(PYLINT_ARGS) src
+endef
+LINT_RULES := $(call VENV_RULE_FN, lint, $(firstword $(PYTHON_IMAGES)), \
+    -e . pylint=="$$(PYLINT_VERSION)" $$(TESTS_REQUIRE), \
+    LINT_COMMANDS_FN)
+$(eval $(LINT_RULES))
+ifneq '$(DUMP_RULES)' ''
+$(info $(LINT_RULES))
+$(info )
+endif
+
+
+.PHONY: doc
+ifneq '$(SPHINX_DOC)' ''
+define DOC_COMMANDS_FN
+	$(1)/sphinx-build $$(SPHINX_ARGS) -b doctest -d build/doc/doctrees/ $$(SPHINX_DOC) build/doc/doctest/
+	$(1)/sphinx-build $$(SPHINX_ARGS) -b html -d build/doc/doctrees/ $$(SPHINX_DOC) build/doc/html/
+endef
+DOC_RULES := $(call VENV_RULE_FN, doc, $(firstword $(PYTHON_IMAGES)), \
+    -e . sphinx=="$$(SPHINX_VERSION)" $$(TESTS_REQUIRE), \
+    DOC_COMMANDS_FN)
+$(eval $(DOC_RULES))
+ifneq '$(DUMP_RULES)' ''
+$(info $(DOC_RULES))
+$(info )
+endif
+endif
+
+
+.PHONY: _gh-pages gh-pages
+ifneq '$(GHPAGES_SRC)' ''
+gh-pages: _gh-pages
+_gh-pages: commit
+	if [ ! -d ../$(notdir $(CURDIR)).gh-pages ]; then git clone -b gh-pages `git config --get remote.origin.url` ../$(notdir $(CURDIR)).gh-pages; fi
+	cd ../$(notdir $(CURDIR)).gh-pages && git pull
+	rsync -rv --delete --exclude=.git/ $(GHPAGES_SRC) ../$(notdir $(CURDIR)).gh-pages
+	touch ../$(notdir $(CURDIR)).gh-pages/.nojekyll
+endif
+
+
+.PHONY: _publish publish
+publish: _publish
+_publish: commit
+define PUBLISH_COMMANDS_FN
+	rm -rf dist/
+	$(1)/python3 -m build -n
+	$(1)/twine check dist/*
+	$(1)/twine upload dist/*
+endef
+PUBLISH_RULES := $(call VENV_RULE_FN, publish, $(firstword $(PYTHON_IMAGES)), build twine wheel, PUBLISH_COMMANDS_FN)
+$(eval $(PUBLISH_RULES))
+ifneq '$(DUMP_RULES)' ''
+$(info $(PUBLISH_RULES))
+$(info )
+endif
+
+
+define CHANGELOG_COMMANDS_FN
+	$(1)/simple-git-changelog
+endef
+CHANGELOG_RULES := $(call VENV_RULE_FN, changelog, $(firstword $(PYTHON_IMAGES)), simple-git-changelog, CHANGELOG_COMMANDS_FN)
+$(eval $(CHANGELOG_RULES))
+ifneq '$(DUMP_RULES)' ''
+$(info $(CHANGELOG_RULES))
+$(info )
+endif
