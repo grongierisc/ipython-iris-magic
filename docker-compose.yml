@@ -14,6 +14,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./example/Notebooks/Embedded:/irisdev/app/src/Notebooks
+      - ./.:/irisdev/app/
     ports:
       - 52773
       - 1972
