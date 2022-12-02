@@ -61,7 +61,7 @@ class IrisMagic(Magics):
         if not self.conn:
             display(HTML("""No connection to IRIS\n
                 Please use the line magic to create a connection\n
-                Fromat: %%iris iris://<<username>>:<<password>>@<<host>>:<<port>>/<<namespace>>\n
+                Fromat: %%iris iris://(username):(password)@(host):(port)/(namespace)\n
                 Example: %%iris iris://superuser:SYS@localhost:1972/USER\n
                 """))
             return
@@ -69,16 +69,12 @@ class IrisMagic(Magics):
         # merge lines into one delimited by spaces
         cell = ' '.join(cell.splitlines()).lstrip()
         rsp = ""
-        # f = io.StringIO()
-        # with redirect_stdout(f):
-            ##class(%Studio.General).Execute()
-            ##class(ObjectScript.Kernel.CodeExecutor).CodeResult(,)
-            ##self.iris.classMethodVoid("ObjectScript.Kernel.CodeExecutor","CodeResult",cell,"cos")
-            # self.iris.classMethodVoid("%Library.Device","ReDirectIO",1)
-            # self.iris.classMethodVoid("%Studio.General","Execute",cell)
-        rsp = self.iris.functionString("Run","ExecCode",cell)
-            # rsp = f.getvalue()
-
+        try:
+            # execute the code
+            rsp = self.iris.classMethodObject("ExecCode","Run",cell)
+        except Exception as e:
+            display(HTML(e))
+        # display the result
         display(HTML(rsp))
 
     def create_connection(self, connection_string):
@@ -91,9 +87,13 @@ class IrisMagic(Magics):
                 Example: %%iris iris://superuser:SYS@localhost:1972/USER\n
                 """))
                 return
+            # create the slqalchemy engine
             engine = create_engine(connection_string)
+            # get a raw connection
             self.conn = engine.raw_connection()
+            # create the iris object
             self.iris = intersystems_iris.createIRIS(self.conn)
+            # create the routine
             self.create_routine()
         except Exception as experr: # pylint: disable=broad-except
             display(HTML(experr))
