@@ -41,29 +41,32 @@ class IrisMagic(Magics):
     conn = None
     iris = None
 
-    @line_magic
-    def iris(self, line): # pylint: disable=function-redefined,method-hidden
-        """Run the cell block of Iris code"""
-        if self.conn is None:
-            self.create_connection(line)
+    _CONNECTION_ERROR = """
+                Please use the line magic to create a connection</br>
+                Format: %%iris iris://(username):(password)@(host):(port)/(namespace)</br>
+                Example: %%iris iris://superuser:SYS@localhost:1972/USER</br>
+                """
+
+    @line_magic('iris')
+    def iris_line(self, line):
+        """Run the line block of Iris code"""
+        self.create_connection(line)
 
     @cell_magic
-    def iris(self, line, cell): # pylint: disable=function-redefined,method-hidden
+    def iris(self, line, cell):
         """
         An iris magic
         It can interpret iris code (ObjectScript)
         Returns the result of the code execution
         """
-        # check is the line is not empty and if it is a connection string
-        if line and not self.conn:
+        # check requirements
+        # if line is not empty, it means that the user is trying to create a connection
+        if line:
+            line = line.strip()
             self.create_connection(line)
-
+        # if line is not empty and the connection is not created, try to create it
         if not self.conn:
-            display(HTML("""No connection to IRIS\n
-                Please use the line magic to create a connection\n
-                Fromat: %%iris iris://(username):(password)@(host):(port)/(namespace)\n
-                Example: %%iris iris://superuser:SYS@localhost:1972/USER\n
-                """))
+            display(HTML(self._CONNECTION_ERROR))
             return
 
         # merge lines into one delimited by spaces
@@ -71,32 +74,38 @@ class IrisMagic(Magics):
         rsp = ""
         try:
             # execute the code
-            rsp = self.iris.classMethodObject("ExecCode","Run",cell)
-        except Exception as e:
-            display(HTML(e))
+            rsp = self.iris.functionString("Run","ExecCode",cell)
+        except Exception as err: # pylint: disable=broad-except
+            display(HTML(err))
         # display the result
-        display(HTML(rsp))
+        if rsp:
+            display(HTML(rsp))
 
     def create_connection(self, connection_string):
         """Create a connection to IRIS"""
+        # if a connection is already created, close it
+        if self.conn:
+            display(HTML("Closing the connection"))
+            display(HTML("You cannot access to the variables of the previous connection"))
+            self.conn.close()
+            self.conn = None
+        if not connection_string.startswith('iris://'):
+            raise Exception("Invalid connection string")
+        # create the slqalchemy engine
         try:
-            if not connection_string.startswith('iris://'):
-                display(HTML("""No connection to IRIS\n
-                Please use the line magic to create a connection\n
-                Fromat: %%iris iris://<<username>>:<<password>>@<<host>>:<<port>>/<<namespace>>\n
-                Example: %%iris iris://superuser:SYS@localhost:1972/USER\n
-                """))
-                return
-            # create the slqalchemy engine
-            engine = create_engine(connection_string)
-            # get a raw connection
-            self.conn = engine.raw_connection()
-            # create the iris object
+            self.conn = create_engine(connection_string).raw_connection()
+        except Exception: # pylint: disable=broad-except
+            raise Exception("Can't create a connection to IRIS")
+        # create the iris object
+        try:
             self.iris = intersystems_iris.createIRIS(self.conn)
-            # create the routine
+        except Exception: # pylint: disable=broad-except
+            raise Exception("Can't create a connection to IRIS")
+        # create the routine
+        try:
             self.create_routine()
-        except Exception as experr: # pylint: disable=broad-except
-            display(HTML(experr))
+        except Exception: # pylint: disable=broad-except
+            raise Exception("Can't create the routine")
 
     def create_routine(self):
         """Create the routine to execute the code"""
@@ -113,3 +122,6 @@ class IrisMagic(Magics):
         routine.invokeVoid("Save")
         # compile the routine
         routine.invokeVoid("Compile")
+        # check if the routine is compiled
+        if not self.iris.classMethodBoolean("%Routine","Exists","ExecCode"):
+            raise Exception("Can't compile the routine")
