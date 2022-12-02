@@ -52,8 +52,8 @@ class IrisMagic(Magics):
         """Run the line block of Iris code"""
         self.create_connection(line)
 
-    @cell_magic
-    def iris(self, line, cell):
+    @cell_magic('iris')
+    def iris_cell(self, line, cell):
         """
         An iris magic
         It can interpret iris code (ObjectScript)
