@@ -18,7 +18,7 @@ def main():
         description='ipython-iris-magic',
         long_description=long_description,
         long_description_content_type='text/markdown',
-        version='0.0.5',
+        version='0.0.6',
         author='grongier',
         author_email='guillaume.rongier@intersystems.com',
         keywords='ipython-iris-magic',
