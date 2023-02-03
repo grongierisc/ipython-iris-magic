@@ -39,35 +39,6 @@ Then go to this url: http://127.0.0.1:8888/notebooks/Demo-Iris-Magic.ipynb
 Set x = 1
 Write x
 ```
-
-You can also use the magic to run SQL query.
-
-### Load the magic
-
-```python
-%load_ext sql
-```
-
-/!\ You need to install the sql extension first.
-
-The sql extension is not part of the standard IPython installation. You can install it with the following command:
-
-```bash
-pip install ipython-sql
-```
-
-### Connect to the server
-
-```python
-%sql iris://superuser:SYS@localhost:1972/USER
-```
-
-### Run the SQL query
-
-```python
-%sql SELECT 1
-```
-
 ## Installation
 
 In order to use this magic, you need to install the [ipython-iris-magic](https://pypi.python.org/pypi/ipython-iris-magic) package.
@@ -98,3 +69,31 @@ Output:
 test="toto"
 ```
 
+
+You can also use the magic to run SQL query.
+
+### Load the magic
+
+```python
+%load_ext sql
+```
+
+/!\ You need to install the sql extension first.
+
+The sql extension is not part of the standard IPython installation. You can install it with the following command:
+
+```bash
+pip install ipython-sql
+```
+
+### Connect to the server
+
+```python
+%sql iris://superuser:SYS@localhost:1972/USER
+```
+
+### Run the SQL query
+
+```python
+%sql SELECT 1
+```
