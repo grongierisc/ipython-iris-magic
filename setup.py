@@ -18,7 +18,7 @@ def main():
         description='ipython-iris-magic',
         long_description=long_description,
         long_description_content_type='text/markdown',
-        version='0.0.6',
+        version='0.0.7',
         author='grongier',
         author_email='guillaume.rongier@intersystems.com',
         keywords='ipython-iris-magic',
@@ -43,7 +43,6 @@ def main():
             "ipython>=1.0",
             "ipython-genutils>=0.1.0",
             "sqlalchemy-iris>=0.4.0",
-            "intersystems-iris",
         ]
     )
 
