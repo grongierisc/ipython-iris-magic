@@ -37,7 +37,7 @@ def main():
             'Topic :: Utilities'
         ],
         package_dir={'': 'src'},
-        packages=['iris_magic'],
+        packages=['iris_magic','irisnative','intersystems_iris'],
         python_requires='>=3.9',
         install_requires=[
             "ipython>=1.0",
