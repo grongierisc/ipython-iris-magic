@@ -2,7 +2,7 @@ services:
   notebook:
     build: 
       context: example
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     ports:
       - "8888:8888"
     volumes:
@@ -11,7 +11,7 @@ services:
   iris:
     build: 
       context: iris
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     volumes:
       - ./example/Notebooks/Embedded:/irisdev/app/src/Notebooks
       - ./.:/irisdev/app/
