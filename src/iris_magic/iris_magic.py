@@ -81,7 +81,7 @@ class IrisMagic(Magics):
         if rsp:
             display(HTML(rsp))
 
-    def create_connection(self, connection_string):
+    def create_connection(self, connection_string:str):
         """Create a connection to IRIS"""
         # if a connection is already created, close it
         if self.conn:
