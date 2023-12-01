@@ -18,7 +18,7 @@ def main():
         description='ipython-iris-magic',
         long_description=long_description,
         long_description_content_type='text/markdown',
-        version='0.0.7',
+        version='0.0.8',
         author='grongier',
         author_email='guillaume.rongier@intersystems.com',
         keywords='ipython-iris-magic',
@@ -37,7 +37,7 @@ def main():
             'Topic :: Utilities'
         ],
         package_dir={'': 'src'},
-        packages=['iris_magic','irisnative','intersystems_iris'],
+        packages=['iris_magic'],
         python_requires='>=3.9',
         install_requires=[
             "ipython>=1.0",

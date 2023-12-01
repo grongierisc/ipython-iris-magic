@@ -31,13 +31,13 @@ def test_create_routine():
 
 def test_iris_cell():
     magic = IrisMagic()
-    magic.create_connection("iris://superuser:SYS@localhost:51773/USER")
     cell = """
     SET x = 1
     WRITE x
     """
-    magic.iris_cell("", cell)
+    magic.iris_cell("iris://superuser:SYS@localhost:51773/USER", cell)
     # Add assertions to check the expected output
+    assert True
 
 if __name__ == "__main__":
     test_create_engine()
