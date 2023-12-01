@@ -1,6 +1,6 @@
 {
     "objectscript.conn": {
-        "active": true,
+        "active": false,
         "ns": "USER",
         "username": "SuperUser",
         "password": "SYS",
@@ -8,5 +8,10 @@
             "service": "iris",
             "internalPort": 52773
         }
-    }
+    },
+    "python.testing.pytestArgs": [
+        "src"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }

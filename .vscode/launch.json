@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Unit Test",
+      "type": "python",
+      "request": "test",
+      "justMyCode": false,
+    },
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "type": "objectscript",
+      "request": "launch",
+      "name": "ObjectScript Debug Class",
+      "program": "##class(Grongier.PEX.Utils).Test()",
+    },
+    {
+      "type": "objectscript",
+      "request": "attach",
+      "name": "ObjectScript Attach",
+      "processId": "${command:PickProcess}",
+      "system": true
+    }
+  ]
+}
